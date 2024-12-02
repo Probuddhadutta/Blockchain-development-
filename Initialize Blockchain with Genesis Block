@@ -1,0 +1,2 @@
+blockchain = [create_genesis_block()]
+previous_block = blockchain[0]
