@@ -1,0 +1,3 @@
+def calculate_hash(index, previous_hash, timestamp, data):
+    value = str(index) + previous_hash + str(timestamp) + str(data)
+    return hashlib.sha256(value.encode('utf-8')).hexdigest()
