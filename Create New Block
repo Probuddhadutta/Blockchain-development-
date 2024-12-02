@@ -1,0 +1,5 @@
+def create_new_block(previous_block, data):
+    index = previous_block.index + 1
+    timestamp = datetime.datetime.now()
+    hash = calculate_hash(index, previous_block.hash, timestamp, data)
+    return Block(index, previous_block.hash, timestamp, data, hash)
