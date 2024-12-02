@@ -1,0 +1,2 @@
+def create_genesis_block():
+    return Block(0, "0", datetime.datetime.now(), "Genesis Block", calculate_hash(0, "0", datetime.datetime.now(), "Genesis Block"))
