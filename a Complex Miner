@@ -1,0 +1,76 @@
+pip install hashlib
+pip install merkletools
+import hashlib
+import time
+from merkletools import MerkleTools
+
+class Block:
+    def __init__(self, index, previous_hash, transactions, timestamp):
+        self.index = index
+        self.previous_hash = previous_hash
+        self.timestamp = timestamp
+        self.transactions = transactions
+        self.nonce = 0
+        self.hash = self.calculate_hash()
+
+    def calculate_hash(self):
+        mt = MerkleTools(hash_type="sha256")
+        mt.add_leaf(self.transactions, True)
+        mt.make_tree()
+        merkle_root = mt.get_merkle_root()
+        block_string = f"{self.index}{self.previous_hash}{self.timestamp}{merkle_root}{self.nonce}"
+        return hashlib.sha256(block_string.encode()).hexdigest()
+
+    def mine_block(self, difficulty):
+        prefix_str = '0' * difficulty
+        start_time = time.time()
+        while self.hash[:difficulty] != prefix_str:
+            self.nonce += 1
+            self.hash = self.calculate_hash()
+        end_time = time.time()
+        print(f"Block mined: {self.hash} (Nonce: {self.nonce})")
+        print(f"Time taken: {end_time - start_time:.2f} seconds")
+
+class Blockchain:
+    def __init__(self, difficulty):
+        self.chain = []
+        self.difficulty = difficulty
+        self.create_genesis_block()
+
+    def create_genesis_block(self):
+        genesis_block = Block(0, "0", ["Genesis Block"], time.time())
+        self.chain.append(genesis_block)
+
+    def get_latest_block(self):
+        return self.chain[-1]
+
+    def add_block(self, new_block):
+        new_block.previous_hash = self.get_latest_block().hash
+        new_block.mine_block(self.difficulty)
+        self.chain.append(new_block)
+
+    def is_chain_valid(self):
+        for i in range(1, len(self.chain)):
+            current_block = self.chain[i]
+            previous_block = self.chain[i - 1]
+
+            if current_block.hash != current_block.calculate_hash():
+                return False
+            if current_block.previous_hash != previous_block.hash:
+                return False
+        return True
+
+if __name__ == '__main__':
+    difficulty = 4  # Difficulty level
+    blockchain = Blockchain(difficulty)
+
+    # Adding new blocks to the blockchain
+    transactions = ["Alice->Bob", "Bob->Charlie"]
+    new_block = Block(1, blockchain.get_latest_block().hash, transactions, time.time())
+    blockchain.add_block(new_block)
+
+    transactions = ["Charlie->Dave", "Dave->Eve"]
+    new_block = Block(2, blockchain.get_latest_block().hash, transactions, time.time())
+    blockchain.add_block(new_block)
+
+    print("Blockchain valid?", blockchain.is_chain_valid())
