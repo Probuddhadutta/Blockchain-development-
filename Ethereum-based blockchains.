@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract DataProtection {
+    // Define a struct to store data securely
+    struct ProtectedData {
+        address owner;
+        bytes32 hashedData; // Data is stored as a hash for security
+    }
+
+    // Mapping to store data by an identifier
+    mapping(string => ProtectedData) private dataStorage;
+
+    // Event to log data storage
+    event DataStored(address indexed owner, string identifier);
+    event DataAccessed(address indexed accessor, string identifier);
+
+    // Modifier to check if the caller is the owner of the data
+    modifier onlyOwner(string memory identifier) {
+        require(
+            dataStorage[identifier].owner == msg.sender,
+            "You are not the owner of this data."
+        );
+        _;
+    }
+
+    /**
+     * @dev Store data securely on the blockchain
+     * @param identifier Unique identifier for the data
+     * @param dataHash Hash of the data to store
+     */
+    function storeData(string memory identifier, bytes32 dataHash) public {
+        require(
+            dataStorage[identifier].owner == address(0),
+            "Data with this identifier already exists."
+        );
+
+        // Store the hashed data and the owner's address
+        dataStorage[identifier] = ProtectedData({
+            owner: msg.sender,
+            hashedData: dataHash
+        });
+
+        emit DataStored(msg.sender, identifier);
+    }
+
+    /**
+     * @dev Retrieve data hash (only the owner can retrieve)
+     * @param identifier Unique identifier for the data
+     * @return The hash of the data
+     */
+    function retrieveData(string memory identifier)
+        public
+        view
+        onlyOwner(identifier)
+        returns (bytes32)
+    {
+        emit DataAccessed(msg.sender, identifier);
+        return dataStorage[identifier].hashedData;
+    }
+
+    /**
+     * @dev Verify data by checking its hash
+     * @param identifier Unique identifier for the data
+     * @param dataToVerify The original data to verify
+     * @return True if the hash matches, false otherwise
+     */
+    function verifyData(string memory identifier, string memory dataToVerify)
+        public
+        view
+        returns (bool)
+    {
+        bytes32 computedHash = keccak256(abi.encodePacked(dataToVerify));
+        return computedHash == dataStorage[identifier].hashedData;
+    }
+}
